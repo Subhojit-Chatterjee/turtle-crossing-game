@@ -1,54 +1,36 @@
-from scoreboard import ScoreBoard
-from turtle import Screen
-from paddle import Paddle
-from ball import Ball
 import time
-
-
-INITIAL_SPEED = 1
+from turtle import Screen
+from player import Player
+from car_manager import CarManager
+from scoreboard import ScoreBoard
 
 screen = Screen()
-screen.setup(width=800, height=600)
-screen.bgcolor("black")
-screen.title("Pong Game")
 screen.tracer(0)
+screen.setup(width=600, height=600)
 
-r_paddle = Paddle((350, 0))
-l_paddle = Paddle((-350, 0))
-ball = Ball()
-screen.listen()
+player = Player()
+car_manager = CarManager()
 scoreboard = ScoreBoard()
 
-screen.onkey(fun=r_paddle.go_up, key="Up")
-screen.onkey(fun=r_paddle.go_down, key="Down")
-screen.onkey(fun=l_paddle.go_up, key="w")
-screen.onkey(fun=l_paddle.go_down, key="s")
+screen.listen()
+
+screen.onkey(fun=player.go_up, key="Up")
+screen.onkey(fun=player.go_left, key="Left")
+screen.onkey(fun=player.go_right, key="Right")
 
 game_is_on = True
-
 while game_is_on:
+    time.sleep(0.1)
+    car_manager.create_car()
+    car_manager.move_cars()
     screen.update()
-    time.sleep(ball.moving_speed)
-    ball.move()
-    collision_counter = 0
-    # Detecting collision with the wall
-    if ball.ycor() > 280 or ball.ycor() < -280:
-        # Ball bounces off the wall
-        ball.bounce_y()
-        # Detect collision with the paddle
-    elif ball.distance(r_paddle) < 60 and ball.xcor() > 320 or ball.distance(l_paddle) < 60 and ball.xcor() < -320:
-        ball.bounce_x()
-        collision_counter += 1
-        ball.speed(INITIAL_SPEED + collision_counter)
-        # Detect when the ball goes out of bounds
-    elif ball.xcor() > 380:
-        ball.restart()
-        ball.moving_speed *= 1
-        scoreboard.l_point()
 
-    elif ball.xcor() < -380:
-        ball.restart()
-        ball.moving_speed = 0.1
-        scoreboard.r_point()
+    for car in car_manager.all_cars:
+        if car.distance(player) < 25:
+            game_is_on = False
+            scoreboard.game_over()
+    if player.is_at_finish_line():
+        scoreboard.increase_level()
+        car_manager.increase_speed()
 
 screen.exitonclick()
